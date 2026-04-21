@@ -24,9 +24,11 @@ import {
 } from "@web/model/relational_model/utils";
 import {evaluateExpr} from "@web/core/py_js/py";
 import {loadBundle, templates} from "@web/core/assets";
+import {_t} from "@web/core/l10n/translation";
 import {parseXML} from "@web/core/utils/xml";
 import {rasterLayersStore} from "../../../raster_layers_store.esm";
 import {registry} from "@web/core/registry";
+import {sprintf} from "@web/core/utils/strings";
 import {useService} from "@web/core/utils/hooks";
 import {vectorLayersStore} from "../../../vector_layers_store.esm";
 
@@ -568,6 +570,19 @@ export class GeoengineRenderer extends Component {
      */
     onDisplayPopupRecord(record) {
         const popup = this.getPopup();
+        if (!this.vectorSource) {
+            this.notification.add(
+                sprintf(
+                    _t('Please update latitude and longitude details for: "%s"'),
+                    record.data.display_name
+                ),
+                {
+                    type: "warning",
+                }
+            );
+            this.clickToHidePopup();
+            return false;
+        }
         const feature = this.vectorSource.getFeatureById(record.resId);
         if (feature) {
             this.mountGeoengineRecord({
