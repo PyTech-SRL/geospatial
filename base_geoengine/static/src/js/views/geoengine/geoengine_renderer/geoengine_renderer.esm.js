@@ -24,9 +24,11 @@ import {
 } from "@web/model/relational_model/utils";
 import {evaluateExpr} from "@web/core/py_js/py";
 import {loadBundle, templates} from "@web/core/assets";
+import {_t} from "@web/core/l10n/translation";
 import {parseXML} from "@web/core/utils/xml";
 import {rasterLayersStore} from "../../../raster_layers_store.esm";
 import {registry} from "@web/core/registry";
+import {sprintf} from "@web/core/utils/strings";
 import {useService} from "@web/core/utils/hooks";
 import {vectorLayersStore} from "../../../vector_layers_store.esm";
 
@@ -59,6 +61,7 @@ export class GeoengineRenderer extends Component {
         this.view = useService("view");
         this.user = useService("user");
         this.fields = useService("field");
+        this.notification = useService("notification");
 
         // For related model we need to load all the service needed by RelationalModel
         this.services = {};
@@ -565,8 +568,22 @@ export class GeoengineRenderer extends Component {
     /**
      * When you click on a record in the RecordsPanel, this method is called to display the popup.
      * @param {*} record
+     * @returns {false} when records does not coordinate details in it
      */
     onDisplayPopupRecord(record) {
+        if (record.data && record.data.shape === false) {
+            this.notification.add(
+                sprintf(
+                    _t('Please update latitude and longitude details for: "%s"'),
+                    record.data.display_name
+                ),
+                {
+                    type: "warning",
+                }
+            );
+            this.clickToHidePopup();
+            return false;
+        }
         const popup = this.getPopup();
         const feature = this.vectorSource.getFeatureById(record.resId);
         if (feature) {
